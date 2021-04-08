@@ -1,0 +1,338 @@
+Cleaning Data for Sentiment Analysis on Python
+
+In [1]: raw_docs = ["Here are some very simple basic
+sentences.", "They won’t be very interesting , I’m afraid.", "The point of these examples is to _learn how
+basic text \ cleaning works_ on *very simple* data."]  #Removing characters considered noisy in the data mining process.
+
+In [2]:from nltk.tokenize import word_tokenize      #The first step consists of defining a list with all word-vectors in the text. NLTK makes it easy to convert documents-as-strings into word-vectors, a process called tokenizing.
+tokenized_docs = [word_tokenize(doc) for doc in
+raw_docs]
+print tokenized_docs
+
+Example output:
+Out[2]: [[’Here’, ’are’, ’some’, ’very’, ’simple’, ’basic’,
+’sentences’, ’.’], [’They’, ’wo’, "n’t", ’be’, ’very’,
+’interesting’, ’,’, ’I’, "’m", ’afraid’, %’.’], [’The’,
+’point’, ’of’, ’these’, ’examples’, ’is’, ’to’, ’_learn’,
+’how’, %’basic’, ’text’, ’cleaning’, ’works_’, ’on’, ’*very’,
+’simple*’, ’data’, ’.’]]
+
+In [3]: import string
+string.punctuation #Searching and removing punctuation sympols.
+
+Out[3]: ’!"#\$\%&\’()*+,-./:;<=>?@[\\]_‘{|}’
+
+Removing panctuation sympols using Regular Expressions (RE) package.
+In [4]:import re
+import string
+regex = re.compile(’[%s]’ % re.escape(string.
+punctuation))
+tokenized_docs_no_punctuation = []
+for review in tokenized_docs:
+new_review = []
+for token in review:
+new_token = regex.sub(u’’, token)
+if not new_token == u’’:
+new_review.append(new_token)
+tokenized_docs_no_punctuation.append(new_review
+)
+print tokenized_docs_no_punctuation
+
+Out[4]: [[’Here’, ’are’, ’some’, ’very’, ’simple’, ’basic’,
+’sentences’],
+[’They’, ’wo’, u’nt’, ’be’, ’very’, ’interesting’, ’I’, u’m’,
+’afraid’],
+[’The’, ’point’, ’of’, ’these’, ’examples’, ’is’, ’to’,
+u’learn’, ’how’, ’basic’, ’text’, ’cleaning’, u’works’, ’on’,
+u’very’, u’simple’, ’data’]] #One can see that punctuation symbols are removed, and those words containing 
+a punctuation symbol are kept and marked with an initial u.
+
+#Another important step in many data mining systems for text analysis consists of
+stemming and lemmatizing. Morphology is the notion that words have a root form.
+If you want to get to the basic term meaning of the word, you can try applying
+a stemmer or lemmatizer. This step is useful to reduce the dictionary size and the
+posterior high-dimensional and sparse feature spaces. NLTK provides different ways
+of performing this procedure. In the case of running the porter.stem(word)
+approach, the output is shown next.
+
+In [5]:
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.snowball import SnowballStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
+porter = PorterStemmer ()
+#snowball = SnowballStemmer(’english ’)
+#wordnet = WordNetLemmatizer ()
+#each of the following commands perform stemming on
+word
+porter.stem(word)
+#snowball.stem(word)
+#wordnet.lemmatize(word)
+
+Out[5]: [[’Here’, ’are’, ’some’, ’very’, ’simple’, ’basic’,
+’sentences’], [’They’, ’wo’, u’nt’, ’be’, ’very’,
+’interesting’, ’I’, u’m’, ’afraid’], [’The’, ’point’, ’of’,
+’these’, ’examples’, ’is’, ’to’, u’learn’, ’how’, ’basic’,
+’text’, ’cleaning’, u’works’, ’on’, u’very’, u’simple’,
+’data’]]
+[[’Here’, ’are’, ’some’, ’veri’, ’simpl’, ’basic’, ’sentenc’],
+[’They’, ’wo’, u’nt’, ’be’, ’veri’, ’interest’, ’I’, u’m’,
+’afraid’], [’The’, ’point’,’of’, ’these’, ’exampl’, ’is’,
+’to’, u’learn’, ’how’, ’basic’, ’text’, ’clean’, u’work’, ’on’,
+u’veri’,u’simpl’, ’data’]]
+#This kind of approaches are very useful in order to reduce the exponential number
+of combinations of words with the same meaning and match similar texts. Words
+such as “interest” and “interesting” will be converted into the same word “interest”
+making the comparison of texts easier, as we will see later.
+
+#Another very useful data cleaning procedure consists of removing HTML entities
+and tags. Those may contain words and other symbols that were not removed by
+applying the previous procedures, but that do not provide useful meaning for text
+analysis and will introduce noise in our posterior text representation procedure. There
+are many possibilities for removing these tags. Doing that by using NLKT package.
+In [6]:import nltk
+test_string ="<p>While many of the stories tugged
+at the heartstrings , I never felt manipulated by
+the authors. (Note: Part of the reason why I
+don’t like the ’Chicken Soup for the Soul ’
+series is that I feel that the authors are just
+dying to make the reader clutch for the box of
+tissues .) </a>"
+print ’Original text:’
+print test_string
+print ’Cleaned text:’
+nltk.clean_html(test_string.decode ())
+
+Out[6]: Original text:
+<p>While many of the stories tugged at the heartstrings, I
+never felt manipulated by the authors. (Note: Part of the
+reason why I don’t like the "Chicken Soup for the Soul" series
+is that I feel that the authors are just dying to make the
+reader clutch for the box of tissues.)</a>
+Cleaned text:
+u"While many of the stories tugged at the heartstrings, I never
+felt manipulated by the authors. (Note: Part of the reason why
+I don’t like the "Chicken Soup for the Soul" series is that I
+feel that the authors are just dying to make the reader clutch
+for the box of tissues.)" #You can see that tags such as “<p>” and “</a>” have been removed.
+
+Text Representation
+
+#In order to analyze sentiment from text, the next step consists of having a representation of the text that has been cleaned by using variants of Bag ofWords (BoW)
+models.The basic idea is to think about word frequencies. If we can define a dictionary of possible different words, the number of different existing words will
+define the length of a feature space to represent each text.
+
+#First, we need to count the terms per document, which is the term frequency vector.
+In [7]:
+mydoclist = [’Mireia loves me more than Hector
+loves me’,
+’Sergio likes me more than Mireia loves me’,
+’He likes basketball more than football ’]
+from collections import Counter
+for doc in mydoclist:
+tf = Counter ()
+for word in doc.split ():
+tf[word] += 1
+print tf.items ()
+
+Out[7]: [(’me’, 2), (’Mireia’, 1), (’loves’, 2), (’Hector’, 1),
+(’than’, 1), (’more’, 1)] [(’me’, 2), (’Mireia’, 1), (’likes’,
+1), (’loves’, 1), (’Sergio’, 1), (’than’, 1), (’more’, 1)]
+[(’basketball’, 1), (’football’, 1), (’likes’, 1), (’He’, 1),
+(’than’, 1), (’more’, 1)]
+#Here, we have introduced the Python object called a Counter. Counters are only
+in Python 2.7 and higher. They are useful because they allow you to perform this
+exact kind of function: counting in a loop. A Counter is a dictionary subclass for
+counting hashable objects. It is an unordered collection where elements are stored as
+dictionary keys and their counts are stored as dictionary values. Counts are allowed
+to be any integer value including zero or negative counts.
+
+#Elements are counted from an iterable or initialized from another mapping (or Counter).
+In [8]:
+c = Counter () # a new , empty counter
+c = Counter(’gallahad ’) # a new counter from an
+iterable
+
+#Counter objects have a dictionary interface except that they return a zero count for missing items instead of raising a KeyError.
+In [9]:
+c = Counter ([’eggs ’, ’ham’])
+c[’bacon ’]
+
+Out[9]: 0
+
+#Let us call this a first stab at representing documents quantitatively, just by their
+word counts (also thinking that we may have previously filtered and cleaned the text
+using previous approaches). Here we show an example for computing the feature
+vector based on word frequencies.
+
+In [10]:
+def build_lexicon(corpus):
+# define a set with all possible words included in
+all the sentences or "corpus"
+lexicon = set()
+for doc in corpus:
+lexicon.update ([ word for word in doc.split
+()])
+return lexicon
+def tf(term , document):
+return freq(term , document)
+def freq(term , document):
+return document.split ().count(term)
+vocabulary = build_lexicon(mydoclist)
+doc_term_matrix = []
+print ’Our vocabulary vector is [’ +
+’, ’.join(list(vocabulary)) + ’]’
+for doc in mydoclist:
+print ’The doc is "’ + doc + ’"’
+tf_vector = [tf(word , doc) for word in
+vocabulary]
+tf_vector_string = ’, ’.join(format(freq , ’d’)
+for freq
+in tf_vector)
+print ’The tf vector for Document %d is [%s]’
+% (( mydoclist.index(doc)+1),
+tf_vector_string)
+doc_term_matrix.append(tf_vector)
+print ’All combined , here is our master document
+term matrix: ’
+print doc_term_matrix
+
+Out[10]: Our vocabulary vector is [me, basketball, Julie, baseball,
+likes, loves, Jane, Linda, He, than, more]
+The doc is "Julie loves me more than Linda loves me"
+The tf vector for Document 1 is [2, 0, 1, 0, 0, 2, 0, 1, 0, 1,
+1]
+The doc is "Jane likes me more than Julie loves me"
+The tf vector for Document 2 is [2, 0, 1, 0, 1, 1, 1, 0, 0, 1,
+1]
+The doc is "He likes basketball more than baseball"
+The tf vector for Document 3 is [0, 1, 0, 1, 1, 0, 0, 0, 1, 1,
+1]
+All combined, here is our master document term matrix:
+[[2, 0, 1, 0, 0, 2, 0, 1, 0, 1, 1], [2, 0, 1, 0, 1, 1, 1, 0, 0,
+1, 1], [0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1]]
+
+#Now, every document is in the same feature space, meaning that we can represent
+the entire corpus in the same dimensional space. Once we have the data in the
+same feature space, we can start applying some machine learning methods: learning,
+classifying, clustering, and so on. But actually, we have a few problems. Words are
+not all equally informative. If words appear too frequently in a single document,
+they are going to muck up our analysis.We want to perform some weighting of these
+term frequency vectors into something a bit more representative. That is, we need to
+do some vector normalizing. One possibility is to ensure that the L2 norm of each
+vector is equal to 1.
+
+In [11]:
+import math
+def l2_normalizer(vec):
+denom = np.sum([el**2 for el in vec])
+return [(el / math.sqrt(denom)) for el in vec]
+doc_term_matrix_l2 = []
+for vec in doc_term_matrix:
+doc_term_matrix_l2.append(l2_normalizer(vec))
+print ’A regular old document term matrix: ’
+print np.matrix(doc_term_matrix)
+print ’\nA document term matrix with row -wise L2
+norm:’
+
+print np.matrix(doc_term_matrix_l2)
+Out[11]: A regular old document term matrix:
+[[2 0 1 0 0 2 0 1 0 1 1]
+[2 0 1 0 1 1 1 0 0 1 1]
+[0 1 0 1 1 0 0 0 1 1 1]]
+A document term matrix with row-wise L2 norm:
+[[ 0.57735027 0. 0.28867513 0. 0. 0.57735027
+0. 0.28867513 0. 0.28867513 0.28867513]
+[ 0.63245553 0. 0.31622777 0. 0.31622777 0.31622777
+0.31622777 0. 0. 0.31622777 0.31622777]
+[ 0. 0.40824829 0. 0.40824829 0.40824829 0. 0.
+0. 0.40824829 0.40824829 0.40824829]]
+#You can see that we have scaled down the vectors so that each element is between
+[0, 1]. This will avoid getting a diminishing return on the informative value of a word
+massively used in a particular document. For that, we need to scale down words that
+appear too frequently in a document.
+
+#Finally, we have a final task to perform. Just as not all words are equally valuable
+within a document, not all words are valuable across all documents. We can try
+reweighting every word by its inverse document frequency.
+
+In [12]:
+def numDocsContaining(word , doclist):
+doccount = 0
+for doc in doclist:
+if freq(word , doc) > 0:
+doccount += 1
+return doccount
+def idf(word , doclist):
+n_samples = len(doclist)
+df = numDocsContaining(word , doclist)
+return np.log(n_samples / (float(df)) )
+my_idf_vector = [idf(word , mydoclist) for word in
+vocabulary]
+print ’Our vocabulary vector is [’ + ’, ’.join(list
+(vocabulary)) + ’]’
+print ’The inverse document frequency vector is
+[’ + ’, ’.join(format(freq , ’f’) for freq in
+my_idf_vector) + ’]’
+
+Out[12]: Our vocabulary vector is [me, basketball, Mireia, football,
+likes, loves, Sergio, Hector, He, than, more]
+The inverse document frequency vector is [0.405465, 1.098612,
+0.405465, 1.098612, 0.405465, 0.405465, 1.098612, 1.098612,
+1.098612, 0.000000, 0.000000]
+#Now we have a general sense of information values per term in our vocabulary,
+accounting for their relative frequency across the entire corpus. Note that this is
+an inverse. To get TF–IDF weighted word-vectors, we have to perform the simple
+calculation of the term frequencies multiplied by the inverse frequency values.
+
+#In the next example we convert our IDF vector into a matrix where the diagonal
+is the IDF vector.
+
+In [13]:
+def build_idf_matrix(idf_vector):
+idf_mat = np.zeros ((len(idf_vector), len(
+idf_vector)))
+np.fill_diagonal(idf_mat , idf_vector)
+return idf_mat
+my_idf_matrix = build_idf_matrix(my_idf_vector)
+print my_idf_matrix
+
+Out[13]: [[ 0.40546511 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. ]
+[ 0. 1.09861229 0. 0. 0. 0. 0. 0. 0. 0. 0. ]
+[ 0. 0. 0.40546511 0. 0. 0. 0. 0. 0. 0. 0. ]
+[ 0. 0. 0. 1.09861229 0. 0. 0. 0. 0. 0. 0. ]
+[ 0. 0. 0. 0. 0.40546511 0. 0. 0. 0. 0. 0. ]
+[ 0. 0. 0. 0. 0. 0.40546511 0. 0. 0. 0. 0. ]
+[ 0. 0. 0. 0. 0. 0. 1.09861229 0. 0. 0. 0. ]
+[ 0. 0. 0. 0. 0. 0. 0. 1.09861229 0. 0. 0. ]
+[ 0. 0. 0. 0. 0. 0. 0. 0. 1.09861229 0. 0. ]
+[ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. ]
+[ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. ]]
+
+#That means we can now multiply every term frequency vector by the inverse
+document frequency matrix. Then, to make sure we are also accounting for words
+that appear too frequently within documents, we will normalize each document using
+the L2 norm.
+
+In [14]:
+doc_term_matrix_tfidf = []
+#performing tf -idf matrix multiplication
+for tf_vector in doc_term_matrix:
+doc_term_matrix_tfidf.append(np.dot(tf_vector ,
+my_idf_matrix))
+#normalizing
+doc_term_matrix_tfidf_l2 = []
+for tf_vector in doc_term_matrix_tfidf:
+doc_term_matrix_tfidf_l2.
+append(l2_normalizer(tf_vector))
+print vocabulary
+# np.matrix () just to make it easier to look at
+print np.matrix(doc_term_matrix_tfidf_l2)
+
+Out[14]: set([’me’, ’basketball’, ’Mireia’, ’football’, ’likes’,
+’loves’, ’Sergio’, ’Linda’, ’He’, ’than’, ’more’])
+[[ 0.49474872 0. 0.24737436 0. 0. 0.49474872 0. 0.67026363 0.
+0. 0. ]
+[ 0.52812101 0. 0.2640605 0. 0.2640605 0.2640605 0.71547492 0.
+0. 0. 0. ]
+[ 0. 0.56467328 0. 0.56467328 0.20840411 0. 0. 0. 0.56467328 0.
+0. ]]

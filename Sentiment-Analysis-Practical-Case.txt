@@ -1,0 +1,161 @@
+Practical Case
+
+Here, we will perform all the previously presented procedures for data cleaning, stemming, and
+representation and introduce some binary learning schemes to learn the text repre-
+sentations in the feature space. The binary learning schemes will receive examples
+for training positive and negative sentiment texts and we will apply them later to
+unseen examples from a test set.
+
+We will apply the whole sentiment analysis process in two examples. The first
+corresponds to the Large Movie reviews dataset [2]. This is one of the largest public
+available data sets for sentiment analysis, which includes more than 50,000 texts
+from movie reviews including the groundtruth annotation related to positive and
+negative movie reviews. As a proof on concept, for this example we use a subset of
+the dataset consisting of about 30% of the data.Note that at the end of the script we
+perform training and testing based on two different state-of-the-art machine learning
+approaches: Naive Bayes and Support Vector Machines. It is beyond the scope of
+this chapter to give details of the methods and parameters. The important point here
+is that the documents are represented in feature spaces that can be used by different
+data mining tools.
+
+Data for the example: https://www.aclweb.org/anthology/P11-1015/
+
+In [15]:
+from nltk.tokenize import word_tokenize
+from nltk.stem.porter import PorterStemmer
+from sklearn.feature_extraction.text import
+TfidfVectorizer
+from nltk.classify import NaiveBayesClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn import svm
+from unidecode import unidecode
+def BoW(text):
+# Tokenizing text
+text_tokenized = [word_tokenize(doc) for doc in
+text]
+# Removing punctuation
+regex = re.compile(’[%s]’ % re.escape(string.
+punctuation))
+tokenized_docs_no_punctuation = []
+for review in text_tokenized:
+new_review = []
+for token in review:
+new_token = regex.sub(u’’, token)
+if not new_token == u’’:
+new_review.append(new_token)
+tokenized_docs_no_punctuation.append(
+new_review)
+# Stemming and Lemmatizing
+porter = PorterStemmer ()
+preprocessed_docs = []
+for doc in tokenized_docs_no_punctuation:
+final_doc = ’’
+for word in doc:
+final_doc = final_doc + ’ ’ + porter.
+stem(word)
+preprocessed_docs.append(final_doc)
+return preprocessed_docs
+#read your train text data here
+textTrain=ReadTrainDataText ()
+preprocessed_docs=BoW(textTrain) # for train data
+# Computing TIDF word space
+tfidf_vectorizer = TfidfVectorizer(min_df = 1)
+trainData = tfidf_vectorizer.fit_transform(
+preprocessed_docs)
+textTest=ReadTestDataText () #read your test text
+data here
+prepro_docs_test=BoW(textTest) # for test data
+testData = tfidf_vectorizer.transform(
+prepro_docs_test)
+
+In [16]:
+print(’Training and testing on training Naive Bayes
+’)
+gnb = GaussianNB ()
+testData.todense ()
+y_pred = gnb.fit(trainData.todense (), targetTrain)
+.predict(trainData.todense ())
+print("Number of mislabeled training points out of
+a total %d points : %d"
+% (trainData.shape [0],( targetTrain != y_pred)
+.sum()))
+y_pred = gnb.fit(trainData.todense (), targetTrain)
+.predict(testData.todense ())
+print("Number of mislabeled test points out of a
+total %d points : %d" %
+(testData.shape [0],( targetTest != y_pred).sum
+()))
+print(’Training and testing on train with SVM’)
+clf = svm.SVC()
+clf.fit(trainData.todense (), targetTrain)
+y_pred = clf.predict(trainData.todense ())
+print("Number of mislabeled test points out of a
+total %d points : %d" %
+(trainData.shape [0],( targetTrain != y_pred).
+sum()))
+print(’Testing on test with already trained SVM’)
+y_pred = clf.predict(testData.todense ())
+print("Number of mislabeled test points out of a
+total %d points : %d" %
+(testData.shape [0],( targetTest != y_pred).sum
+()))
+
+#In addition to the machine learning implementations provided by the Scikit-
+learn module used in this example, NLTK also provides useful learning tools for
+text learning, which also includes Naive Bayes classifiers. Another related pack-
+age with similar functionalities is Textblob. The results of running the script are
+shown next.
+
+Out[16]: Training and testing on training Naive Bayes
+Number of mislabeled training points out of a total 4313 points
+: 129
+Number of mislabeled test points out of a total 6292 points :
+2087
+Training and testing on train with SVM
+Number of mislabeled test points out of a total 4313 points :
+1288
+Testing on test with already trained SVM
+Number of mislabeled test points out of a total 6292 points :
+1680
+
+#We can see that the training error of Naive Bayes on the selected data is 129/4313
+while in testing it is 2087/6292. Interestingly, the training error using SVM is higher
+(1288/4313), but it provides a better generalization of the test set than Naive Bayes
+(1680/6292). Thus it seems that Naive Bayes produces more overfitting of the data
+(selecting particular features for better learning the training data but producing such
+high modifications of the feature space for testing that cannot be recovered, just
+reducing the generalization capability of the technique). However, note that this is a
+simple execution with standard methods on a subset of the dataset provided. More
+data, as well as many other aspects, will influence the performance. For instance,
+we could enrich our dictionary by introducing a list of already studied positive and
+negative words.
+
+Conclusions
+
+In this chapter, we have analyzed the problem of binary sentiment analysis of text
+data: data cleaning to remove irrelevant symbols, punctuation and tags; stemming in
+order to define the same root for different works with the same meaning in terms of
+sentiment; defining a dictionary of words (including n-grams); and representing text
+in terms of a feature space with the length of the dictionary. We have also seen cod-
+ification in this feature space, based on normalized and weighted term frequencies.
+We have defined feature vectors that can be used by any machine learning tech-
+nique in order to perform sentiment analysis (binary classification in the examples
+shown), and reviewed some useful Python packages, such as NLTK and Textblob,
+for sentiment analysis.
+As discussed in the introduction of this chapter, we have only reviewed the senti-
+ment analysis problem and describedcommonprocedures for performing the analysis
+resulting from a binary classification problem. Several open issues can be addressed
+in further research, such as the identification of sarcasm, a lack of text structure (as
+in tweets), many possible sentiment categories and degrees (not only binary but also
+multiclass, regression, and multilabel problems, among others), identification of the
+object of analysis, or subjective text, to name a few.
+The tools described in this chapter can define a basis for dealing with those more
+challenging problems. One recent example of current state-of-the-art research is the
+work of [3], where deep learning architectures are used for sentiment analysis. Deep
+learning strategies are currently a powerful tool in the fields of pattern recognition,
+machine learning, and computer vision, among others; the main deep learning strate-
+gies are based on neural network architectures. In the work of [3], a deep learning
+model builds up a representation of whole sentences based on the sentence struc-
+ture, and it computes the sentiment based on how words form the meaning of longer
+phrases. In the methods explained in this chapter, n-grams are the only features that
+capture those semantics.
